@@ -184,7 +184,7 @@ class Heap:
         return str(self.__arr)
 
     def __iter__(self):
-        return self.__arr
+        return self.__arr.__iter__()
 
     def push(self, e):
         arr = self.__arr
