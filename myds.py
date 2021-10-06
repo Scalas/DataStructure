@@ -167,3 +167,72 @@ class DoublyLinkedList:
         else:
             raise StopIteration
 
+
+# 힙 클래스
+class Heap:
+    def __init__(self, arr=[]):
+        if arr:
+            for i in range(len(arr) // 2 - 1, -1, -1):
+                self.__heapify(arr, i)
+        self.__arr = arr
+        self.__size = len(arr)
+
+    def __len__(self):
+        return self.__size
+
+    def __str__(self):
+        return str(self.__arr)
+
+    def __iter__(self):
+        return self.__arr
+
+    def push(self, e):
+        arr = self.__arr
+        arr.append(e)
+        self.__size += 1
+        idx = self.__size-1
+        while idx > 0:
+            parent = (idx - 1) // 2
+            if arr[parent] > arr[idx]:
+                arr[parent], arr[idx] = arr[idx], arr[parent]
+                idx = parent
+            else:
+                break
+
+    def pop(self):
+        arr = self.__arr
+        if arr:
+            res = arr[0]
+            self.__size -= 1
+            if len(arr) == 1:
+                arr.pop()
+            else:
+                arr[0] = arr.pop()
+                idx = 0
+                while idx < self.__size:
+                    left, right = idx * 2 + 1, idx * 2 + 2
+                    target = idx
+                    if left < self.__size and arr[left] < arr[target]:
+                        target = left
+                    if right < self.__size and arr[right] < arr[target]:
+                        target = right
+                    if idx != target:
+                        arr[idx], arr[target] = arr[target], arr[idx]
+                    else:
+                        break
+            return res
+        return -1
+
+    @staticmethod
+    def __heapify(arr, cur):
+        left, right = cur * 2 + 1, cur * 2 + 2
+        target = cur
+        if left < len(arr) and arr[left] < arr[target]:
+            target = left
+        if right < len(arr) and arr[right] < arr[target]:
+            target = right
+        if cur != target:
+            arr[cur], arr[target] = arr[target], arr[cur]
+            Heap.__heapify(arr, target)
+
+

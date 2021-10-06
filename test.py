@@ -1,32 +1,36 @@
 from myds import DoublyLinkedList
+from myds import Heap
 
 
 # 테스트
 def test():
-    # 연결 리스트 생성
-    dlist = DoublyLinkedList()
+    # 힙 생성
+    heap = Heap()
 
-    # 데이터 삽입
-    dlist.insert(3)
-    dlist.insert(1)
-    dlist.insert(2)
-    dlist.insert(4)
-    dlist.insert(0)
-    dlist.insert(6)
-    dlist.insert(7)
-    dlist.insert(9)
+    # 힙에 삽입
+    heap.push(5)
+    heap.push(1)
+    heap.push(2)
+    heap.push(0)
+    heap.push(7)
+    heap.push(3)
 
-    # 데이터 4 삭제
-    dlist.delete(4)
+    # 힙 출력
+    print(heap)
 
-    # 첫 번째 데이터(3) 삭제
-    dlist.delete_at(0)
+    # 작은 순서대로 출력
+    for _ in range(6):
+        print(heap.pop())
 
-    # 3 번째 데이터(6) 삭제
-    dlist.delete_at(3)
+    # 배열을 인자로 전달하여 힙 생성
+    heap = Heap([5, 2, 3, 0, 7, 1])
 
-    # Python 의 list 로 변환하여 출력
-    print(list(dlist))
+    # 힙 출력
+    print(heap)
+
+    # 작은 순서대로 출력
+    for _ in range(6):
+        print(heap.pop())
 
 
 if __name__ == '__main__':
