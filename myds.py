@@ -236,265 +236,217 @@ class Heap:
             Heap.__heapify(arr, target)
 
 
+# 삽입, 삭제 모두 구현할 레드블랙트리
 class RBTree:
     class __Node:
-        def __init__(self, key, color):
-            self.__key = key
+        def __init__(self, p=None):
+            # 키값은 None, 색은 0(검은색)
+            self.key = None
+            self.color = 0
 
-            # 노드의 색
-            # 0: 검정, 1: 빨강
-            self.__color = color
-            self.__parent = None
-            self.__left = None
-            self.__right = None
+            # 부모노드
+            self.parent = p
 
-        def __cmp__(self, other):
-            if self.__key < other.__key:
-                return -1
-            elif self.__key > other.__key:
-                return 1
-            else:
-                return 0
+            # 좌측 자식노드, 우측 자식노드는 None
+            self.left = None
+            self.right = None
 
-        def set_parent(self, node):
-            self.__parent = node
-
-        def set_left(self, node):
-            self.__left = node
-
-        def set_right(self, node):
-            self.__right = node
-
-        def set_color(self, color):
-            self.__color = color
-
-        def set_key(self, key):
-            self.__key = key
-
-        def get_key(self):
-            return self.__key
-
-        def get_color(self):
-            return self.__color
-
-        def get_parent(self):
-            return self.__parent
-
-        def get_left(self):
-            return self.__left
-
-        def get_right(self):
-            return self.__right
+            # NIL 여부 True
+            self.IS_NIL = True
 
     def __init__(self):
-        self.__root = None
+        # 루트노드에 NIL 노드 세팅
+        self.__root = self.__Node()
+
+        # 트리의 크기 0으로 초기화
         self.__size = 0
 
     def __len__(self):
+        # 트리의 크기 반환
         return self.__size
 
-    def insert(self, e):
-        # 삽입할 노드를 생성
-        # 색은 기본적으로 붉은색
-        new_node = self.__Node(e, 1)
-        pos = self.__root
-
-        # 삽입한 노드가 루트노드인 경우
-        if not pos:
-            # 노드의 색을 검은색으로 변경하여 삽입
-            new_node.set_color(0)
-            self.__root = new_node
-            self.__size += 1
-        else:
-            while pos:
-                if pos.get_key() < new_node.get_key():
-                    if not pos.get_right():
-                        pos.set_right(new_node)
-                        new_node.set_parent(pos)
-                        self.__size += 1
-                        break
-                    pos = pos.get_right()
-                elif pos.get_key() > new_node.get_key():
-                    if not pos.get_left():
-                        pos.set_left(new_node)
-                        new_node.set_parent(pos)
-                        self.__size += 1
-                        break
-                    pos = pos.get_left()
-                else:
-                    break
-            self.__insertion_fix_tree(new_node)
-
-    def search(self, e):
-        pos = self.__root
-        while pos:
-            key = pos.get_key()
-            if key > e:
-                pos = pos.get_left()
-            elif key < e:
-                pos = pos.get_right()
+    # 데이터 삽입 함수
+    def insert(self, key):
+        # 삽입할 위치 탐색
+        cursor = self.__root
+        while not cursor.IS_NIL:
+            # 현재 노드보다 키 값이 크다면 우측 자식노드로 이동
+            if cursor.key < key:
+                cursor = cursor.right
+            # 현재 노드보다 키 값이 작다면 좌측 자식노드로 이동
+            elif cursor.key > key:
+                cursor = cursor.left
+            # 이미 키 값이 존재할 경우 삽입 종료(삽입안함)
             else:
-                break
-        return pos
+                return False
 
-    def __insertion_fix_tree(self, node):
-        # 삽입된 노드의 부모노드
-        parent = node.get_parent()
+        # 삽입 위치의 NIL 노드에 key, color, 좌측 자식노드, 우측 자식노드를 세팅하고 NIL 여부를 False 로 한다
+        cursor.key = key
+        cursor.color = 1
+        cursor.left = self.__Node(cursor)
+        cursor.right = self.__Node(cursor)
+        cursor.IS_NIL = False
 
+        # 루트노드의 색은 검은색
+        self.__root.color = 0
+
+        # insert_fix 를 수행하여 RB 트리의 규칙을 유지
+        self.__insert_fix(cursor)
+
+    # 삽입 이후 규칙에 맞게 트리를 수정하는 함수
+    def __insert_fix(self, node):
+        parent = node.parent
         # 부모노드가 존재하고 붉은색인 동안 반복
-        while parent and parent.get_color() == 1:
-            # 삽입된 노드의 조부모노드
-            # 부모노드가 붉은색인 시점에서 루트노드가 아니기 때문에 조부모노드 는 반드시 존재한다
-            grand_parent = parent.get_parent()
+        # 루트노드는 검은색이기 떄문에 부모노드가 붉은색이면 반드시 조부모 노드가 존재
+        while parent and parent.color == 1:
+            # 조부모노드
+            grand_parent = parent.parent
 
-            # 부모 노드가 어느쪽 자식인지의 정보
-            # true 라면 좌측 자식노드, false 라면 우측 자식노드가 된다;
-            parent_direction = (grand_parent.get_left() == parent)
+            # 부모노드와 노드가 어느쪽 자식노드인지 확인
+            # True: 좌측 / False: 우측
+            parent_direction = (grand_parent.left == parent)
+            node_direction = (parent.left == node)
 
-            # 회전 대상 노드가 어느쪽 자식인지의 정보
-            # true 라면 좌측 자식노드, false 라면 우측 자식노드가 된다;
-            node_direction = (parent.get_left() == node)
+            # 삼촌노드
+            uncle_node = grand_parent.right if parent_direction else grand_parent.left
 
-            # 삽입된 노드의 삼촌 노드
-            uncle_node = grand_parent.get_right() if parent_direction else grand_parent.get_left()
+            # 케이스 1. Recoloring
+            # 삼촌 노드가 붉은색인 경우
+            if uncle_node.color == 1:
+                # 삼촌노드와 부모노드를 모두 검은색으로 변경
+                uncle_node.color = parent.color = 0
 
-            # 삼촌 노드의 색
-            u_color = 0 if (not uncle_node or uncle_node.get_color() == 0) else 1
+                # 조부모노드를 붉은색으로 변경
+                grand_parent.color = 1
 
-            # 케이스 1. 삼촌 노드가 붉은색이라면
-            # Recoloring 을 수행
-            if u_color == 1:
-                # 부모노드와 삼촌노드의 색을 검은색으로, 조부모노드의 색을 붉은색으로 바꾼다
-                parent.set_color(0)
-                uncle_node.set_color(0)
-                grand_parent.set_color(1)
-
-                # 삽입노드를 조부모 노드로, 부모노드를 조부모노드의 부모노드로 변경한다
+                # 조부모노드를 삽입노드로 하여 fix 를 다시 수행
                 node = grand_parent
-                parent = node.get_parent()
+                parent = node.parent
+                continue
 
-            # 케이스 2. 삼촌 노드가 검은색이라면
-            # Restructuring 을 수행
+            # 케이스 2. Restructuring
+            # 삼촌 노드가 검은색인 경우
             else:
-                # 회전 대상 노드와 부모노드가 서로 다른방향의 자식 노드인 경우 (LR 또는 RL 상태)
+                # 부모노드와 노드가 서로 다른 방향의 자식노드인 경우(LR, RL 형태)
                 if node_direction != parent_direction:
-                    # 부모 노드가 좌측 자식노드라면 부모노드에 대해 LL 회전을 수행
-                    # 부모 노드가 우측 자식노드라면 부모노드에 대해 RR 회전을 수행
-                    self.__left_rotation(parent) if parent_direction else self.__right_rotation(parent)
+                    # LR 형태인 경우 LL 형태로 변형
+                    if parent_direction:
+                        self.__left_rotation(parent)
 
-                    # 회전으로 부모자식 관계가 역전되었기 때문에 부모노드를 회전 대상 노드로 설정
-                    parent = node
+                    # RL 형태인 경우 RR 형태로 변형
+                    else:
+                        self.__right_rotation(parent)
 
-                # 회전을 통해 LL 혹은 RR 상태가 되었기 때문에 원래 회전 대상 노드였던 parent 가 최종적으로 부모노드가 되고
-                # 기존의 parent 와 grand_parent 가 자식노드가 된다. 부모노드가 되는 노드는 검은색, 나머진 붉은색을 칠한다.
-                # 기존의 parent 의 경우 이미 붉은색이기 때문에 칠할필요가 없다
-                parent.set_color(0)
-                grand_parent.set_color(1)
+                    # 회전에 의해 parent 와 node 가 뒤바뀜
+                    node, parent = parent, node
 
-                # LL 상태라면 grand_parent 대상으로 LL 회전, 즉 __right_rotation 을 수행한다
+                # LL 형태인 경우 조부모노드에 대해 right_rotation
                 if parent_direction:
                     self.__right_rotation(grand_parent)
-
-                # RR 상태라면 grand_parent 대상으로 RR 회전, 즉 __left_rotation 을 수행한다
+                # RR 형태인 경우 조부모노드에 대해 left_rotation
                 else:
                     self.__left_rotation(grand_parent)
 
-                # Restructuring 의 경우 서브트리에 영향을 주지 않기 때문에 더이상 작업이 불필요하다.
+                # 부모노드가 된 parent 노드의 색을 검은색으로, 나머지 두 노드는 붉은색으로 한다
+                parent.color = 0
+                grand_parent.color = 1
+                node.color = 1
+
+                # Restructuring 은 추가작업을 필요로하지 않음
                 break
 
-        # 루트의 색은 항상 검은색을 유지해야한다
-        self.__root.set_color(0)
+        # 루트노드는 항상 검은색
+        self.__root.color = 0
 
-    # 좌측 회전 함수
     def __left_rotation(self, node):
-        # 회전 대상 노드 또는 회전 대상 노드의 우측 자식노드가 존재하지 않을 경우 종료
-        if not node or not node.get_right():
+        if node.IS_NIL or node.right.IS_NIL:
             return
 
-        # 회전 대상노드의 부모노드
-        parent = node.get_parent()
+        parent = node.parent
+        right_tmp = node.right
 
-        # 우측 자식노드를 임시변수에 저장
-        right_temp = node.get_right()
+        node.right = right_tmp.left
+        right_tmp.left.parent = node
 
-        # 회전 대상노드의 우측 자식노드를 우측 자식노드의 좌측 자식노드로 설정
-        node.set_right(node.get_right().get_left())
+        right_tmp.left = node
+        node.parent = right_tmp
 
-        # 새로 설정된 우측 자식노드가 존재한다면 부모노드를 회전 대상노드로 설정
-        if node.get_right():
-            node.get_right().set_parent(node)
-
-        # 임시변수에 저장해둔 원래 우측 자식노드의 좌측 자식노드를 회전 대상노드로 설정
-        right_temp.set_left(node)
-
-        # 원래 우측 자식노드의 부모노드를 회전 대상노드의 부모노드로 설정
-        right_temp.set_parent(parent)
-
-        # 회전 대상노드의 부모노드가 존재한다면
-        # 회전 대상노드의 부모노드의 자식노드를 원래 우측 자식노드로 설정
+        right_tmp.parent = parent
         if parent:
-            # 회전 대상 노드가 좌측 자식노드였을 경우
-            if node == parent.get_left():
-                parent.set_left(right_temp)
+            if node == parent.left:
+                parent.left = right_tmp
             else:
-                parent.set_right(right_temp)
+                parent.right = right_tmp
+        else:
+            self.__root = right_tmp
 
-        # 회전 대상노드의 부모노드를 원래 우측 자식노드로 설정
-        node.set_parent(right_temp)
-
-        # 만약 회전 대상 노드가 루트노드였다면
-        if node == self.__root:
-            self.__root = right_temp
-
-    # 우측 회전 함수
     def __right_rotation(self, node):
-        # 회전 대상 노드 또는 회전 대상 노드의 좌측 자식노드가 존재하지 않을 경우 종료
-        if not node or not node.get_left():
+        if node.IS_NIL or node.left.IS_NIL:
             return
 
-        # 회전 대상노드의 부모노드
-        parent = node.get_parent()
+        parent = node.parent
+        left_tmp = node.left
 
-        # 좌측 자식노드를 임시변수에 저장
-        left_temp = node.get_left()
+        node.left = left_tmp.right
+        left_tmp.right.parent = node
 
-        # 회전 대상노드의 좌측 자식노드를 좌측 자식노드의 우측 자식노드로 설정
-        node.set_left(node.get_left().get_right())
+        left_tmp.right = node
+        node.parent = left_tmp
 
-        # 새로 설정된 좌측 자식노드가 존재한다면 부모노드를 회전 대상노드로 설정
-        if node.get_left():
-            node.get_left().set_parent(node)
-
-        # 임시변수에 저장해둔 원래 좌측 자식노드의 우측 자식노드를 회전 대상노드로 설정
-        left_temp.set_right(node)
-
-        # 원래 좌측 자식노드의 부모노드를 회전 대상노드의 부모노드로 설정
-        left_temp.set_parent(parent)
-
-        # 회전 대상노드의 부모노드가 존재한다면
-        # 회전 대상노드의 부모노드의 자식노드를 원래 우측 자식노드로 설정
+        left_tmp.parent = parent
         if parent:
-            # 회전 대상 노드가 좌측 자식노드였을 경우
-            if node == parent.get_left():
-                parent.set_left(left_temp)
+            if node == parent.left:
+                parent.left = left_tmp
             else:
-                parent.set_right(left_temp)
+                parent.right = left_tmp
+        else:
+            self.__root = left_tmp
 
-        # 회전 대상노드의 부모노드를 원래 우측 자식노드로 설정
-        node.set_parent(left_temp)
+    # 데이터 삭제 함수
+    def delete(self, key):
+        # 삭제할 노드 탐색
+        target = self.__search(key)
 
-        # 만약 회전 대상 노드가 루트노드였다면
-        if node == self.__root:
-            self.__root = left_temp
+        #
+
+    # 삭제 이후 규칙에 맞게 트리를 수정하는 함수
+    def __delete_fix(self, node):
+        pass
+
+    # 특정 데이터를 찾는 함수
+    # 여기서 노드에는 데이터 값이 따로 없기 때문에 키 값을 반환
+    def get(self, key):
+        target = self.__search(key)
+        if target:
+            return target.key
+        else:
+            return None
+
+    def __search(self, key):
+        # 루트 노드부터 탐색 시작
+        cursor = self.__root
+        while not cursor.IS_NIL:
+            # 현재 노드의 키값보다 key 가 더 크다면 우측 자식노드로 이동
+            if cursor.key < key:
+                cursor = cursor.right
+            # 현재 노드의 키값보다 key 가 더 작다면 좌측 자식노드로 이동
+            elif cursor.key > key:
+                cursor = cursor.left
+            # key 에 해당하는 노드를 찾았다면 노드반환
+            else:
+                return cursor
+
+        # 찾지 못했을 경우 None 반환
+        return None
 
     def in_order(self):
         self._dfs(self.__root, 0, 0)
 
     def _dfs(self, node, bcnt, pre):
-        if node.get_color() == 0:
+        if node.color == 0:
             bcnt += 1
-        if node.get_left():
-            self._dfs(node.get_left(), bcnt, node.get_color())
-        print(node.get_key(), ':', bcnt, ':color=', node.get_color(), "invalid" if pre==node.get_color()==1 else "valid")
-        if node.get_right():
-            self._dfs(node.get_right(), bcnt, node.get_color())
+        if not node.left.IS_NIL:
+            self._dfs(node.left, bcnt, node.color)
+        print(node.key, ':', bcnt, ':color=', node.color, "invalid" if pre == node.color == 1 else "valid")
+        if not node.right.IS_NIL:
+            self._dfs(node.right, bcnt, node.color)
