@@ -287,6 +287,9 @@ class RBTree:
         cursor.right = self.__Node(cursor)
         cursor.IS_NIL = False
 
+        # 트리 크기 1 증가
+        self.__size += 1
+
         # 루트노드의 색은 검은색
         self.__root.color = 0
 
@@ -407,13 +410,172 @@ class RBTree:
         # 삭제할 노드 탐색
         target = self.__search(key)
 
-        #
+        # 삭제할 노드를 찾지 못한 경우
+        if not target:
+            return False
+
+        # 삭제 후 fix 를 위한 변수
+        child, s_color = None, None
+
+        # target 이 리프노드인 경우
+        if target.left.IS_NIL and target.right.IS_NIL:
+            child, s_color = target, target.color
+            target.key = None
+            target.left = target.right = None
+            target.IS_NIL = True
+            target.color = 0
+
+        # 좌측 자식노드를 가진 경우
+        elif not target.left.IS_NIL:
+            # 좌측 서브트리중 가장 오른쪽의 노드를 구한다
+            successor = target.left
+
+            while not successor.right.IS_NIL:
+                successor = successor.right
+
+            # successor 의 좌측 자식노드와 색상 저장
+            child, s_color = successor.left, successor.color
+
+            # 삭제할 노드의 키값을 successor 의 키값으로 변경
+            target.key = successor.key
+
+            # successor 가 target 의 좌측 자식노드인 경우
+            if successor == target.left:
+                # successor 의 부모노드의 좌측 자식노드를 successor 의 좌측 자식노드로 설정
+                successor.parent.left = successor.left
+
+            # successor 가 target 의 좌측 자식노드가 아닌 경우
+            else:
+                # successor 의 부모노드의 우측 자식노드를 successor 의 좌측 자식노드로 설정
+                successor.parent.right = successor.left
+
+            # successor 의 좌측 자식노드의 부모노드를 successor 의 부모노드로 설정
+            successor.left.parent = successor.parent
+
+        # 우측 자식노드만 가진 경우
+        else:
+            # 우측 서브트리중 가장 왼쪽의 노드를 구한다
+            successor = target.right
+            while not successor.left.IS_NIL:
+                successor = successor.left
+
+            # successor 의 우측 자식노드와 색상 저장
+            child, color = successor.right, successor.color
+
+            # 삭제할 노드의 키값을 successor 의 키값으로 변경
+            target.key = successor.key
+
+            # successor 가 target 의 우측 자식노드인 경우
+            if successor == target.right:
+                # successor 의 부모노드의 우측 자식노드를 successor 의 우측 자식노드로 설정
+                successor.parent.right = successor.right
+
+            # successor 가 target 의 우측 자식노드가 아닌 경우
+            else:
+                # successor 의 부모노드의 좌측 자식노드를 successor 의 우측 자식노드로 설정
+                successor.parent.left = successor.right
+
+            # successor 의 우측 자식노드의 부모노드를 successor 의 부모노드로 설정
+            successor.right.parent = successor.parent
+
+        # 트리 크기 1 감소
+        self.__size -= 1
+
+        # 삭제이후 fix 과정
+        # 트리가 비어있지 않은 경우
+        if child.parent:
+            # successor 가 검은색이었던 경우
+            if s_color == 0:
+                # child 는 붉은색인 경우
+                if child.color == 1:
+                    child.color = 0
+
+                # child 도 검은색인 경우
+                else:
+                    self.__delete_fix(child)
+        return True
 
     # 삭제 이후 규칙에 맞게 트리를 수정하는 함수
-    def __delete_fix(self, node):
-        pass
+    def __delete_fix(self, child):
+        # child 의 부모 노드
+        parent = child.parent
 
-    # 특정 데이터를 찾는 함수
+        while parent:
+            # True 일 경우 child 는 parent 의 좌측 자식노드 False 일 경우 우측 자식노드
+            child_direction = (child == parent.left)
+
+            # 형제노드
+            sibling = parent.right if child_direction else parent.left
+
+            # 조카노드
+            n1, n2 = sibling.left, sibling.right
+
+            # parent 가 붉은색인 경우
+            if parent.color == 1:
+                # 케이스 1. sibling, n1, n2 가 모두 검은색인 경우
+                if sibling.color == n1.color == n2.color == 0:
+                    # parent 와 sibling 의 색을 교환하고 종료
+                    parent.color, sibling.color = sibling.color, parent.color
+                    break
+
+            # parent 가 검은색인 경우
+            else:
+                # 케이스 2. sibling, n1, n2도 모두 검은색인 경우
+                if sibling.color == n1.color == n2.color == 0:
+                    # sibling 의 색을 붉은색으로 바꾼 뒤 child 를 parent 로,
+                    # parent 를 parent 의 부모노드로 하여 continue
+                    sibling.color = 1
+                    child, parent = parent, parent.parent
+                    continue
+
+                # 케이스 3. sibling 은 붉은색, n1, n2는 검은색인 경우
+                elif sibling.color == 1 and n1.color == n2.color == 0:
+                    # parent 와 sibling 의 색을 교환
+                    parent.color, sibling.color = sibling.color, parent.color
+
+                    # child 노드의 방향에 따라 회전 수행
+                    if child_direction:
+                        self.__left_rotation(parent)
+                    else:
+                        self.__right_rotation(parent)
+                    continue
+
+            # parent 의 색에 무관한 경우
+            # sibling 의 색이 검은색인 경우
+            if sibling.color == 0:
+                # 가까운 조카노드가 n1, 먼 조카노드가 n2가 되도록 한다
+                if not child_direction:
+                    n1, n2 = n2, n1
+
+                # 케이스 4. 먼 조카노드 n2가 붉은색인 경우
+                if n2.color == 1:
+                    # parent 와 sibling 의 색을 교환하고 n2의 색을 검은색으로 변경
+                    parent.color, sibling.color = sibling.color, parent.color
+                    n2.color = 0
+
+                    # child 노드의 방향에 따라 회전 수행
+                    if child_direction:
+                        self.__left_rotation(parent)
+                    else:
+                        self.__right_rotation(parent)
+                    break
+
+                # 케이스 5. 가까운 조카노드 n1이 붉은색이고 먼 조카노드 n2가 검은색인 경우
+                if n1.color == 1 and n2.color == 0:
+                    # sibling 과 n1의 색을 교환
+                    sibling.color, n1.color = n1.color, sibling.color
+
+                    # child 노드의 방향에 따라 회전 수행
+                    if child_direction:
+                        self.__right_rotation(sibling)
+                    else:
+                        self.__left_rotation(sibling)
+                    continue
+
+        # 루트노드의 색은 항상 검은색
+        self.__root.color = 0
+
+    # 특정 데이터 찾는 함수
     # 여기서 노드에는 데이터 값이 따로 없기 때문에 키 값을 반환
     def get(self, key):
         target = self.__search(key)

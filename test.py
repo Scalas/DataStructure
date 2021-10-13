@@ -5,20 +5,23 @@ import random
 # 테스트
 def test():
     t = RBTree()
-    MAX_VAL = 10000
-    test_set = random.sample(range(1, MAX_VAL), 500)
-    for num in test_set:
+    numset = range(1, 1000000)
+    delset = random.sample(numset, 300000)
+    i = 0
+    for num in numset:
         t.insert(num)
-    print("삽입끝", len(t))
+        print("삽입완료", i)
+        i += 1
 
-    sc = 0
-    for num in test_set:
-        if t.get(num):
-            sc += 1
-    print("탐색끝", sc)
+    i = 0
+    for num in delset:
+        t.delete(num)
+        print("삭제완료", i)
+        i += 1
 
     t.in_order()
-    return 0
+
+    print("정상종료")
 
 
 if __name__ == '__main__':
