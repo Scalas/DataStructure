@@ -612,3 +612,64 @@ class RBTree:
         print(node.key, ':', bcnt, ':color=', node.color, "invalid" if pre == node.color == 1 else "valid")
         if not node.right.IS_NIL:
             self._dfs(node.right, bcnt, node.color)
+
+
+# 트라이 자료구조
+# 소문자 기준으로 작성
+class Trie:
+    class __Node:
+        def __init__(self, is_term=False):
+            self.next = [None] * 26
+            self.is_term = is_term
+
+        def get(self, key):
+            return self.next[ord(key) - ord('a')]
+
+        def set(self, key, node):
+            self.next[ord(key) - ord('a')] = node
+
+    def __init__(self):
+        self.__root = self.__Node()
+        self.__size = 0
+
+    def __len__(self):
+        return self.__size
+
+    # 문자열 삽입
+    def insert(self, string: str):
+        # 루트 노드에서 탐색 시작
+        cur = self.__root
+
+        # 삽입할 문자열의 모든 문자를 소문자로 변환
+        for c in string.lower():
+            nxt = cur.get(c)
+            # 문자 c에 해당하는 노드가 없다면 생성
+            if not nxt:
+                nxt = self.__Node()
+                cur.set(c, nxt)
+
+            # 문자 c에 해당하는 노드로 이동
+            cur = nxt
+
+        # 기존에 없었던 문자열이라면
+        if not cur.is_term:
+            # 문자열의 마지막 문자에 해당하는 노드에 is_term 값을 True 로 설정
+            cur.is_term = True
+
+            # 트리의 크기 1 증가
+            self.__size += 1
+
+    # 문자열 탐색
+    def find(self, string):
+        return True if self.__search(string) else False
+
+    # 문자열의 마지막 문자에 해당하는 노드를 찾아 반환
+    def __search(self, string: str):
+        cur = self.__root
+        for c in string.lower():
+            cur = cur.get(c)
+            if not cur:
+                return None
+        if cur.is_term:
+            return cur
+        return None

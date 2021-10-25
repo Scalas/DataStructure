@@ -1,27 +1,23 @@
-from myds import DoublyLinkedList, Heap, RBTree
+from myds import DoublyLinkedList, Heap, RBTree, Trie
 import random
 
 
 # 테스트
 def test():
-    t = RBTree()
-    numset = range(1, 1000000)
-    delset = random.sample(numset, 300000)
-    i = 0
-    for num in numset:
-        t.insert(num)
-        print("삽입완료", i)
-        i += 1
+    trie = Trie()
+    trie.insert('bee')
+    trie.insert('bean')
+    trie.insert('be')
+    trie.insert('apple')
+    trie.insert('apart')
+    trie.insert('app')
+    trie.insert('be')
 
-    i = 0
-    for num in delset:
-        t.delete(num)
-        print("삭제완료", i)
-        i += 1
-
-    t.in_order()
-
-    print("정상종료")
+    print(trie.find('application'))
+    print(trie.find('apple'))
+    print(trie.find('bea'))
+    print(trie.find('be'))
+    print(len(trie))
 
 
 if __name__ == '__main__':
